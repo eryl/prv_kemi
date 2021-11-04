@@ -5,29 +5,44 @@ import json
 from tqdm import tqdm
 import epo_ops
 from epo_ops.models import Epodoc
-
+import requests
 
 def fetch_data(client: epo_ops.Client, doc_id: str, output_dir: Path, overwrite=False):
+    
     doc = Epodoc(doc_id)
     output_dir = output_dir / f'{doc.as_api_input()}'
     output_dir.mkdir(exist_ok=True, parents=True)
+
+    status_file_path = output_dir / 'status.txt'
+    if status_file_path.exists():
+        with open(status_file_path, 'r') as fp:
+            status = fp.read()
+            if status == 'Missing EPO document':
+                return
+            elif  status == 'Done processing' and not overwrite:
+                return
 
     for endpoint in ["fulltext", "biblio", "description", "claims", "images"]:
         #print("Get", endpoint)
         output_path = output_dir / f'{endpoint}.json'
         if overwrite or not output_path.exists():
-            req = client.published_data('publication', doc, endpoint=endpoint)
-            with open(output_path, 'wb') as fp:
-                fp.write(req.content)
-
+            try:
+                req = client.published_data('publication', doc, endpoint=endpoint)
+                with open(output_path, 'wb') as fp:
+                    fp.write(req.content)
+            except requests.HTTPError as e:
+                print(f"Received HTTP error {e} for document {doc_id} endpoint {endpoint}")
+                with open(status_file_path, 'w') as fp:
+                    fp.write('Missing EPO document')
+                return
+            
     with open(output_dir / 'images.json', 'r') as fp:
         image_query_json = json.load(fp)
-
-      
+    
     image_inquery_result = image_query_json['ops:world-patent-data']['ops:document-inquiry']['ops:inquiry-result']['ops:document-instance']
     if isinstance(image_inquery_result, dict):
         image_inquery_result = [image_inquery_result]
-      
+    
     for res in image_inquery_result:
         if res.get('@desc', None) == 'Drawing':
             n_pages = int(res['@number-of-pages'])
@@ -42,6 +57,9 @@ def fetch_data(client: epo_ops.Client, doc_id: str, output_dir: Path, overwrite=
                                     document_format='application/tiff')
                     with open(output_path, 'wb') as fp:
                         fp.write(req.content)
+
+    with open(status_file_path, 'w') as fp:
+        fp.write('Done processing')
 
     # # Fetch images
     # endpoint = "images"
