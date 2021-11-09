@@ -10,19 +10,15 @@ EPS_URL = 'https://data.epo.org/publication-server/rest/v1.2/patents/{}/document
 def fetch_data(doc_id: str, output_dir: Path, overwrite=False):
     doc_id = 'NW'.join(doc_id.split('.'))
     output_path = output_dir / f'{doc_id}.zip'
-    
-    doc_url = EPS_URL.format(doc_id)
-    req = requests.get(doc_url)
-    req.raise_for_status()
-    with open(output_path, 'wb') as fp:
-        fp.write(req.content)
-
-    
-
+    if overwrite or not output_path.exists():
+        doc_url = EPS_URL.format(doc_id)
+        req = requests.get(doc_url)
+        req.raise_for_status()
+        with open(output_path, 'wb') as fp:
+            fp.write(req.content)
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Script for downloading documents from the EPO Publication Server")
+    parser = argparse.ArgumentParser(description="Script for downloading documents from the EPO Publication Server")
     parser.add_argument('document_numbers', nargs='*', 
                         help='JSON file with a list of all documents to fetch', 
                         type=Path)
@@ -36,7 +32,7 @@ def main():
 
     for docnumber_file in args.document_numbers:
         with open(docnumber_file, 'r') as fp:
-            documents = [line.strip() for line in fp]
+            documents.extend(line.strip() for line in fp)
 
     
     args.output_dir.mkdir(exist_ok=True, parents=True)
