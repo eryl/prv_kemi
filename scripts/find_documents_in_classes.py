@@ -58,7 +58,7 @@ def get_class_patents(client, cql):
     return patents
 
 
-def search_patents_in_classes(ipc_classes, client, output_dir: Path, year_range=(1950,2021), overwrite=False, multiple_years=False):
+def search_patents_in_classes(ipc_classes, client, output_dir: Path, year_range=(2000,2021), overwrite=False, multiple_years=False):
     '''Search for patents belonging to the given classes'''
     for ipc_class in ipc_classes:
         if multiple_years:
