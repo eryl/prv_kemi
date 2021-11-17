@@ -32,6 +32,7 @@ def main():
 
     for docnumber_file in args.document_numbers:
         with open(docnumber_file, 'r') as fp:
+            
             documents.extend(line.strip() for line in fp)
 
     
