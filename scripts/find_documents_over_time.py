@@ -6,6 +6,7 @@ import re
 import datetime
 import random
 from collections import Counter
+import time
 
 from requests.models import HTTPError
 
@@ -59,13 +60,27 @@ def sample_random_patents(week, count, client):
 
     sampled_patents = []
     for search_range in tqdm(collected_ranges, desc="Retriving documents", leave=False):
-        start_range = min(search_range)
-        end_range = max(search_range)
-        req = client.published_data_search(cql, range_begin=start_range, range_end=end_range+1)  # We limit the range to limit how much date we request
-        query_response = json.loads(req.content)
-        patents = extract_patents(query_response)
-        selected_patents = [patents[x - start_range] for x in search_range]
-        sampled_patents.extend(selected_patents)
+        try:
+            start_range = min(search_range)
+            end_range = max(search_range)
+            req = client.published_data_search(cql, range_begin=start_range, range_end=end_range)  # We limit the range to limit how much date we request
+            # Since this is the tightest loop, let's ad ad-hoc throttling here
+            # h = req.headers
+            # throttling_control = h['x-throttling-control']
+            # m = re.search(r'search=(\w+):(\d+)', throttling_control)
+            # if m is not None:
+            #     status, n_requests = m.groups()
+            #     if status != 'green':
+            #         print("Self-throttling")
+            #         time.sleep(120)
+            query_response = json.loads(req.content)
+            patents = extract_patents(query_response)
+            selected_patents = [patents[x - start_range] for x in search_range]
+            sampled_patents.extend(selected_patents)
+        except HTTPError as e:
+            print(f'Error retrieving data for dates {start_range}-{end_range}, {e}')
+            raise e
+        
     return sampled_patents
 
 
@@ -103,6 +118,11 @@ def search_patents_in_classes(ipc_classes, client, output_dir: Path, overwrite=F
                         fp.write('\n'.join(sampled_patents))
                 except HTTPError as e:
                     print(f'Error retrieving data for dates {begin_date_str}-{end_date_str}, {e}')
+                    h = e.response.headers
+                    if 'x-rejection-reason' in h and h['x-rejection-reason'] == 'ThrottlingControlQuota':
+                        wait_time = int(h['retry-after'])
+                        raise e
+
                 except IndexError as e:
                     print(f'Index error when retrieving data for dates {begin_date_str}-{end_date_str}, {e}')
 
