@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 import json
 import datetime
+import zipfile
 
 from requests.models import HTTPError
 
@@ -30,16 +31,17 @@ import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
 from tqdm import tqdm, trange
 import datetime
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import random
 import json
-import imageio
+#import imageio
+
 
 def load_patent_xml(patent_path):
     with ZipFile(patent_path) as patent_zip:
         filenames = [zipinfo.filename for zipinfo in patent_zip.infolist()]
         # We're just assuming the only XML apart from TOC.xml is the one we're looking for
-        # Since the name of this document is based on the application number, not the 
+        # Since the name of this document is based on the application number, not the
         # publication number, we have to scan for it manually
         doc_xml = None
         for filename in filenames:
@@ -47,12 +49,14 @@ def load_patent_xml(patent_path):
             if ext == 'xml' and filename.lower() != 'toc.xml':
                 doc_xml = filename
         if doc_xml is None:
-            raise ValueError(f"Unable to find document xml for zipfile {patent_path}")
-        
+            raise ValueError(
+                f"Unable to find document xml for zipfile {patent_path}")
+
         with patent_zip.open(doc_xml) as patent_xml_fp:
             xml_str = str(patent_xml_fp.read(), encoding='utf8')
             root = ET.fromstring(xml_str)
             return root
+
 
 def load_images(patent_path):
     with ZipFile(patent_path) as patent_zip:
@@ -75,14 +79,16 @@ def numbered_text(paragraph):
     text += ''.join(paragraph.itertext())
     return text
 
+
 def get_texts(elements):
     text_dict = {}
-    
+
     for element in elements:
         lang = element.attrib['lang']
         texts = '\n'.join(numbered_text(c) for c in element)
         text_dict[lang] = texts
     return text_dict
+
 
 def extract_patent_info(patent_path):
     patent_info = dict()
@@ -102,13 +108,14 @@ def extract_patent_info(patent_path):
     # The class string has the form 'A61K  38/44        20060101AFI20130522BHEP        '
     # We first split by white space and only select the first two parts
     split_classes = [text.split() for text in text_classes]
-    selected_parts = [(main_class, sub_class) for main_class, sub_class, *_ in split_classes]
+    selected_parts = [(main_class, sub_class)
+                      for main_class, sub_class, *_ in split_classes]
     patent_info['ipc_classes'] = selected_parts
 
     patent_info['abstract'] = get_texts(root.findall('abstract'))
     patent_info['claims'] = get_texts(root.findall('claims'))
     patent_info['description'] = get_texts(root.findall('description'))
-    
+
     applicants = root.findall('.//SDOBI//B711/snm')
     text_applicants = [e.text for e in applicants]
     patent_info['applicants'] = text_applicants
@@ -117,32 +124,62 @@ def extract_patent_info(patent_path):
     language_text = language.text
     patent_info['language'] = language_text
 
-
     return patent_info
+
 
 def main():
     parser = argparse.ArgumentParser(
         description="Script for dowloading list of documents belonging to a certain class")
-    parser.add_argument('patent_directory', help='Directory containing the patents to package', type=Path)
-    parser.add_argument('--output-dir', help="Where to write the patent archive", type=Path, default=Path())
+    parser.add_argument(
+        'patent_directory', help='Directory containing the patents to package', type=Path)
+    parser.add_argument(
+        '--output-dir', help="Where to write the patent archive", type=Path, default=Path())
+    parser.add_argument('--filter-lang', help="Only include patents wher abstract, "
+                        "description and claims are available in the given language", default='en')
+    
     args = parser.parse_args()
 
     patent_list = set(args.patent_directory.glob('EP*.zip'))
     basename = args.patent_directory.name
 
-
     args.output_dir.mkdir(exist_ok=True, parents=True)
     output_path = args.output_dir / f'{basename}.zip'
+    broken_patents = []
+    empty_patents = []
 
     with ZipFile(output_path, 'w') as patents_fp:
         for patent_file in tqdm(patent_list, desc='Patent files'):
-            patent_info = extract_patent_info(patent_file)
-            patent_number = patent_info['document_number']
-            patents_fp.writestr(patent_number + '/patent_info.json', json.dumps(patent_info, sort_keys=True, indent=2))
-            
-            images = load_images(patent_file)
-            for image_name, image in images:
-                patents_fp.writestr(f'{patent_number}/{image_name}', image)
+            try:
+                patent_info = extract_patent_info(patent_file)
+                abstract_langs = set(patent_info['abstract'].keys())
+                claims_langs = set(patent_info['claims'].keys())
+                description_langs = set(patent_info['description'].keys())
+
+                if len(abstract_langs) == 0 or len(claims_langs) == 0 or len(description_langs) == 0:
+                    empty_patents.append(patent_file.name)
+                    continue
+                    
+                if args.filter_lang is not None:
+                    lang = args.filter_lang
+                    if not (lang in abstract_langs and lang in claims_langs and lang in description_langs):
+                        continue
+
+                patent_number = patent_info['document_number']
+                patents_fp.writestr(patent_number + '/patent_info.json',
+                                    json.dumps(patent_info, sort_keys=True, indent=2))
+
+                images = load_images(patent_file)
+                for image_name, image in images:
+                    patents_fp.writestr(f'{patent_number}/{image_name}', image)
+            except zipfile.BadZipFile as e:
+                #print(f"Error loading file {patent_file}")
+                broken_patents.append(patent_file.name)
+    
+    with open(args.output_dir / f'{basename}_broken_zips.txt', 'w') as fp:
+        fp.write('\n'.join(broken_patents))
+
+    with open(args.output_dir / f'{basename}_empty_patents.txt', 'w') as fp:
+        fp.write('\n'.join(empty_patents))
 
 
 
