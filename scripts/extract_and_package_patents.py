@@ -130,12 +130,11 @@ def extract_patent_info(patent_path):
 def main():
     parser = argparse.ArgumentParser(
         description="Script for dowloading list of documents belonging to a certain class")
-    parser.add_argument(
-        'patent_directory', help='Directory containing the patents to package', type=Path)
-    parser.add_argument(
-        '--output-dir', help="Where to write the patent archive", type=Path, default=Path())
+    parser.add_argument('patent_directory', help='Directory containing the patents to package', type=Path)
+    parser.add_argument('--output-dir', help="Where to write the patent archive", type=Path, default=Path())
     parser.add_argument('--filter-lang', help="Only include patents wher abstract, "
                         "description and claims are available in the given language", default='en')
+    parser.add_argument('--only-with-images', action='store_true')
     
     args = parser.parse_args()
 
