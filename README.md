@@ -7,9 +7,9 @@ Use anaconda to setup the environment
 
 `conda env create -f environment.yml`
 
-This creates a new environment called `epo-ops`. Activate it by running
+This creates a new environment called `epo-data`. Activate it by running
 
-`conda activate epo-ops`
+`conda activate epo-data`
 
 Now you need to install the python client package. This notebook relies on a fork. Clone it to a suitable location:
 
