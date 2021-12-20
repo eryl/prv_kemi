@@ -42,25 +42,23 @@ Notebooks for various kinds of analysis and experimentation can be found in `./n
 ### Scripts for retrieving patents
 There are two scripts for downloading patents `.scripts/retrieve_documents_epo_eps.py` and `.scripts/retrieve_documents_epo_ops.py`, the former uses the _European Publication Server_ and the latter the _Open Patent Service_. EPS is generally recommended but is limited to a quota of 5GB per week. The documents from OPS do not include all figures in a document, only those listed under the "images" API endpoint (typically any figures at the end of the documents). OPS also has additional throttling quotas which makes downloads slower, and requires the API keys.
 
-Both scripts expects as an argument a path to a text file where each row is an EP patent number formattet like "EP0000022.A1". For example, to download all patents listed in the file `examples_and_data/netto_list.txt` and save them to the directory `netto_patents/`, run the command:
+Both scripts expects as an argument a path to a text file where each row is an EP patent number formatted like "EP0000022.A1". For example, to download all patents listed in the file `examples_and_data/netto_list.txt` and save them to the directory `netto_patents/`, run the command:
 
 ```bash
 $ python scripts/retrieve_documents_epo_eps.py examples_and_data/netto_list.txt --output-dir netto_patents
 ```
 
-*Note:* If no output directory is given, the files are saved to the current working directory.
+**Note:** If no output directory is given, the files are saved to the current working directory.
 
 ### Scripts for sampling negative patents
-In this project, we needed to summarize information about the patents in the _positive_ class (the netto list) to be able to construct negative samples. The script `scripts/get_class_info.py` goes through patents in a directory and summarizes their IPC class composition. It also produces a file of suggested classes to sample from to get a negative sample with a similar class composition as the positive class.
+This pipeline is built assuming there is a _positive_ class (e.g. the netto list in `examples_and_data/netto_list.txt`) and supplies scripts to construct negative samples. For this purpose, the script `scripts/get_class_info.py` goes through the downloaded positive patent documents in a directory and summarizes their IPC class composition. It also produces a file of suggested classes to sample from to get a negative sample with a similar class composition as the positive class.
 
 To use this script run:
 
 ```bash
 $ python scripts/get_class_info.py netto_patents --output-dir netto_class_statistics
 ```
-
-This will produce a number of files for IPC-class statistics for the downloaded patents. The file `desired_max_k_sample_ratio_1.0.json` contains the suggested classes from which to produce a negative sample.
-
+This will produce a number of files for IPC-class statistics for the downloaded patents. The file `desired_max_k_sample_ratio_1.json` contains the suggested classes from which to produce a negative sample.
 
 ### Searching for patents
 Two different methods for searching for negative patents is implemented, "complement" and "random" search. Complement search tries to find negative documents in the same IPC classes as the positive documents, while the random search is only constrained to follow the same year distribution as the positives. Examples of outputs can be found in `examples_and_data/search_results`. Due to how unstable the search API can be (with harsh throttling), the search is done piecemeal and saved in multiple files. The search uses a constant random seed, so rerunning the samme commands will give the same output and any results not saved to file will be retrieved again.
