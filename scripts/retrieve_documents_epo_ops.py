@@ -77,7 +77,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Script for downloading documents from the EPO OPS")
     parser.add_argument(
-        'document_numbers', help='JSON file with a list of all documents to fetch', type=Path)
+        'document_numbers', help='A text file where each line is EP document number to fetch, in the format like "EP0000022.A1"', type=Path)
     parser.add_argument('--output-dir', type=Path, default=Path())
     parser.add_argument('--api-keys', help='JSON file with the API key',
                         type=Path, default=Path('../api_key.json'))

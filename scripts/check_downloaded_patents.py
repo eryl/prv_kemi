@@ -123,7 +123,7 @@ def extract_patent_info(patent_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Script for dowloading list of documents belonging to a certain class")
+        description="This script checks patent zip files in the given dierctory and moves them to a separate 'broken_files' directory. Some responsonse from the download server are actually incorrect, and thus leaves broken zip files.")
     parser.add_argument('patent_directory', help='Directory containing the patents to package', type=Path)
     args = parser.parse_args()
 

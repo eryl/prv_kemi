@@ -20,7 +20,7 @@ def fetch_data(doc_id: str, output_dir: Path, overwrite=False):
 def main():
     parser = argparse.ArgumentParser(description="Script for downloading documents from the EPO Publication Server")
     parser.add_argument('document_numbers', nargs='*', 
-                        help='JSON file with a list of all documents to fetch6', 
+                        help='A text file where each line is EP document number to fetch, in the format like "EP0000022.A1"', 
                         type=Path)
     parser.add_argument('--output-dir', type=Path, default=Path())
     parser.add_argument('--overwrite', 

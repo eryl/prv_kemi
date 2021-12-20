@@ -189,7 +189,7 @@ def search_patents_in_classes(ipc_classes, client, output_dir: Path, overwrite=F
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Script for dowloading list of documents belonging to a certain class")
+        description="Script for dowloading lists of documents belonging to a certain class")
     parser.add_argument('classes_file', help='Json file with map from years to IPC classes to go through', type=Path)
     parser.add_argument('--output-dir', help="Directory to ouput document files to", 
         type=Path, default=Path())
@@ -199,7 +199,8 @@ def main():
                         'If not set, data which is already present will not be downloaded again', 
                         action='store_true')
     args = parser.parse_args()
-
+    
+    
     middlewares = [
         # epo_ops.middlewares.Dogpile(), #No dogpile support on windows
         epo_ops.middlewares.Throttler(),

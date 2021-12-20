@@ -73,7 +73,7 @@ def extract_patent_info(patent_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Script for dowloading list of documents belonging to a certain class")
+        description="Script to analyze the class composition of a directory of patent zip-files. Produces statistics of classes as well as suggested list of classes to sample complement patents from.")
     parser.add_argument('netto_list_patents', help='Directory containing the patents in the netto list', type=Path)
     parser.add_argument('--output-directory', help="Directory to output files to", type=Path, default=Path())
     parser.add_argument('--sample-ratio', help="How many complement patents to sample relative to the netto list", type=float, default=1)
@@ -175,7 +175,7 @@ def main():
             [sampled_class,] = random.choices(occured_classes, weights=class_probabilities)
             desired_sample_size_max_k[year][sampled_class] += 1
 
-    with open(output_dir / f'desired__max_k_sample_ratio{args.sample_ratio}.json', 'w') as fp:
+    with open(output_dir / f'desired_max_k_sample_ratio_{args.sample_ratio}.json', 'w') as fp:
         json.dump(desired_sample_size_max_k, fp, sort_keys=True, indent=2)
 
 

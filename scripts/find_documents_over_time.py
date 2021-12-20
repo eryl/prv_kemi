@@ -131,7 +131,7 @@ def search_patents_in_classes(ipc_classes, client, output_dir: Path, overwrite=F
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Script for dowloading list of documents belonging to a certain class")
+        description="Script for dowloading list of documents not constrained by classs, but by time")
     parser.add_argument('sample_file', help='Json file with desired number of patents per year', type=Path)
     parser.add_argument('--output-dir', help="Directory to ouput document files to", 
         type=Path, default=Path())
