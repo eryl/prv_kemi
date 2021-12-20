@@ -1,6 +1,6 @@
-# Patent project scripts
+# EPO document retrieval and analysis
 
-This repo holds scripts for the patent project
+This repo holds scripts for downloading EPO patent data, as well as sampling documents according to some criteria. Parts of the scripts rely on the EPO OPS API, and you need to register a user to use the service at https://www.epo.org/searching-for-patents/data/web-services/ops.html.
 
 ## Environment
 Use anaconda to setup the environment
@@ -40,7 +40,7 @@ The notebooks and scripts will load these attributes when it creates the client.
 Notebooks for various kinds of analysis and experimentation can be found in `./notebooks/`. These are generally not for the automated parts of the repository, that can instead be found in `./scripts/`.
 
 ### Scripts for retrieving patents
-There are to scripts for downloading patents `.scripts/retrieve_documents_epo_eps.py` and `.scripts/retrieve_documents_epo_ops.py`, the former uses the _European Publication Server_ and the latter the _Open Patent Service_. EPS is generally recommended but is limited to a quota of 5GB per week. The documents from OPS do not include all figures in a document, only those listed under the "images" API endpoint (typically any figures at the end of the documents). OPS also has additional throttling quotas which makes downloads slower, and requires the API keys.
+There are two scripts for downloading patents `.scripts/retrieve_documents_epo_eps.py` and `.scripts/retrieve_documents_epo_ops.py`, the former uses the _European Publication Server_ and the latter the _Open Patent Service_. EPS is generally recommended but is limited to a quota of 5GB per week. The documents from OPS do not include all figures in a document, only those listed under the "images" API endpoint (typically any figures at the end of the documents). OPS also has additional throttling quotas which makes downloads slower, and requires the API keys.
 
 Both scripts expects as an argument a path to a text file where each row is an EP patent number formattet like "EP0000022.A1". For example, to download all patents listed in the file `examples_and_data/netto_list.txt` and save them to the directory `netto_patents/`, run the command:
 
