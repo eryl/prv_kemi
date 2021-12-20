@@ -17,7 +17,7 @@ Now you need to install the python client package. This notebook relies on a for
 
 Now go to that location and install a development version using pip:
 
-```
+``` bash
 cd python-epo-ops-client
 git checkout fixes  # This branch contains some small changes of the client
 pip install -e .  # Install a "development" version of the package
